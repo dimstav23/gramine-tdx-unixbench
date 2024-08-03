@@ -1,0 +1,35 @@
+libos.entrypoint = "{{ execdir }}/{{ execprog }}"
+
+# loader.log_level = "{{ log_level }}"
+loader.log_level = "debug"
+
+loader.insecure__use_cmdline_argv = true
+
+loader.env.LD_LIBRARY_PATH = "/lib:{{ arch_libdir }}:/usr{{ arch_libdir }}"
+
+sys.enable_sigterm_injection = true
+
+fs.mounts = [
+  { path = "/lib", uri = "file:{{ gramine.runtimedir() }}" },
+  { path = "{{ arch_libdir }}", uri = "file:{{ arch_libdir }}" },
+  { path = "/usr/lib", uri = "file:/usr/lib" },
+  { path = "{{ execdir }}", uri = "file:{{ execdir }}" },
+]
+
+sgx.debug = true
+sgx.edmm_enable = {{ 'true' if env.get('EDMM', '0') == '1' else 'false' }}
+sgx.enclave_size = "1024M"
+sgx.max_threads = {{ '1' if env.get('EDMM', '0') == '1' else '16' }}
+
+sgx.trusted_files = [
+  "file:{{ execdir }}/",
+  "file:{{ gramine.runtimedir() }}/",
+  "file:{{ arch_libdir }}/",
+  # "file:/usr/{{ arch_libdir }}/",
+]
+
+sgx.allowed_files = [
+  "file:results/",
+  "file:tmp/",
+  "file:testdir/",
+]

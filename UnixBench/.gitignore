@@ -1,0 +1,3 @@
+*.sgx
+*.manifest
+*.sig

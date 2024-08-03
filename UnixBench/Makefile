@@ -126,6 +126,15 @@ CFLAGS += -Wall -pedantic $(OPTON) -I $(SRCDIR) -DTIME
 # END CONFIGURATION
 ##############################################################################
 
+ARCH_LIBDIR ?= /lib/$(shell $(CC) -dumpmachine)
+
+ifeq ($(DEBUG),1)
+GRAMINE_LOG_LEVEL = debug
+else
+GRAMINE_LOG_LEVEL = error
+endif
+
+THIS_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 # local directories
 PROGDIR = ./pgms
@@ -168,12 +177,33 @@ REQD = $(BINS) $(PROGDIR)/unixbench.logo \
 	$(TESTDIR)/sort.src $(TESTDIR)/cctest.c $(TESTDIR)/dc.dat \
 	$(TESTDIR)/large.txt
 
+PROGRAMS := arithoh register short int long float double hanoi \
+	syscall context1 pipe spawn execl dhry2 dhry2reg looper fstime whetstone-double
+
 # ######################### the big ALL ############################
+
 all:
 ## Ick!!!  What is this about???  How about let's not chmod everything bogusly.
 #	@chmod 744 * $(SRCDIR)/* $(PROGDIR)/* $(TESTDIR)/* $(DOCDIR)/*
 	$(MAKE) distr
 	$(MAKE) programs
+
+# Rule for generating .manifest from .manifest.template
+%.manifest: unixbench.manifest.template ${THIS_DIR}/$(PROGDIR)/$*
+	gramine-manifest \
+		-Dlog_level=$(GRAMINE_LOG_LEVEL) \
+		-Dexecdir=${THIS_DIR}/$(PROGDIR) \
+		-Dexecprog=$* \
+		-Darch_libdir=$(ARCH_LIBDIR) \
+		$< > $@
+
+# Rule for generating .manifest.sgx from .manifest
+%.manifest.sgx: %.manifest ${THIS_DIR}/$(PROGDIR)/$*
+	gramine-sgx-sign \
+		--manifest $< \
+		--output $@
+
+%.sig: %.manifest.sgx
 
 # ####################### a check for Run ######################
 check: $(REQD)
@@ -223,7 +253,16 @@ distr:
 
 .PHONY: all check distr programs run clean spotless
 
-programs: $(BINS)
+# Generate manifests for all programs
+manifests: $(PROGRAMS:%=%.manifest)
+
+# Generate SGX manifests and signatures
+sgx_manifests: $(PROGRAMS:%=%.manifest.sgx) $(PROGRAMS:%=%.sig)
+
+programs: $(BINS) manifests
+ifeq ($(SGX),1)
+programs: sgx_manifests
+endif
 
 # (use $< to link only the first dependency, instead of $^,
 #  since the programs matching this pattern have only
@@ -298,7 +337,7 @@ run:
 	sh ./Run
 
 clean:
-	$(RM) $(BINS) core *~ */*~
+	$(RM) $(BINS) core *~ */*~ *.manifest *.manifest.sgx *.token *.sig
 
 spotless:	clean
 	$(RM) $(RESULTDIR)/* $(TMPDIR)/*
