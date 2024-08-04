@@ -193,6 +193,8 @@ all:
 	gramine-manifest \
 		-Dlog_level=$(GRAMINE_LOG_LEVEL) \
 		-Dexecdir=${THIS_DIR}/$(PROGDIR) \
+		-Dtmpdir=${THIS_DIR}/${TMPDIR} \
+		-Dtestdir=${THIS_DIR}/${TESTDIR} \
 		-Dexecprog=$* \
 		-Darch_libdir=$(ARCH_LIBDIR) \
 		$< > $@

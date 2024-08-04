@@ -29,13 +29,38 @@
 #include <signal.h>
 #include <unistd.h>
 
-void wake_me(seconds, func)
-	int seconds;
-	void (*func)();
-{
-	/* set up the signal handler */
-	signal(SIGALRM, func);
-	/* get the clock running */
-	alarm(seconds);
+#include <stdlib.h>
+#include <unistd.h>
+#include <pthread.h>
+
+typedef struct {
+    int seconds;
+    void (*func)();
+} thread_data_t;
+
+void* thread_func(void* arg) {
+    thread_data_t* data = (thread_data_t*)arg;
+    sleep(data->seconds);
+    data->func();
+    free(data);  // Free the allocated memory for thread data
+    return NULL;
 }
 
+void wake_me(int seconds, void (*func)()) {
+    pthread_t thread;
+    thread_data_t* data = malloc(sizeof(thread_data_t));
+    if (data == NULL) {
+        perror("Failed to allocate memory");
+        return;
+    }
+    data->seconds = seconds;
+    data->func = func;
+
+    if (pthread_create(&thread, NULL, thread_func, data) != 0) {
+        perror("Failed to create thread");
+        free(data);
+        return;
+    }
+
+    pthread_detach(thread);  // Detach the timer thread
+}

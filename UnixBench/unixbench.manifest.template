@@ -1,11 +1,11 @@
 libos.entrypoint = "{{ execdir }}/{{ execprog }}"
 
-# loader.log_level = "{{ log_level }}"
-loader.log_level = "debug"
+loader.log_level = "{{ log_level }}"
 
 loader.insecure__use_cmdline_argv = true
 
 loader.env.LD_LIBRARY_PATH = "/lib:{{ arch_libdir }}:/usr{{ arch_libdir }}"
+loader.env.UB_BINDIR = "{{ execdir }}"
 
 sys.enable_sigterm_injection = true
 
@@ -14,6 +14,8 @@ fs.mounts = [
   { path = "{{ arch_libdir }}", uri = "file:{{ arch_libdir }}" },
   { path = "/usr/lib", uri = "file:/usr/lib" },
   { path = "{{ execdir }}", uri = "file:{{ execdir }}" },
+  { path = "{{ tmpdir }}", uri = "file:{{ tmpdir }}" },
+  { path = "{{ testdir }}", uri = "file:{{ testdir }}" }, # for fsdisk benchmark
 ]
 
 sgx.debug = true
@@ -25,11 +27,9 @@ sgx.trusted_files = [
   "file:{{ execdir }}/",
   "file:{{ gramine.runtimedir() }}/",
   "file:{{ arch_libdir }}/",
-  # "file:/usr/{{ arch_libdir }}/",
 ]
 
 sgx.allowed_files = [
-  "file:results/",
-  "file:tmp/",
-  "file:testdir/",
+  "file:{{ tmpdir }}/",
+  "file:{{ testdir }}/",
 ]
