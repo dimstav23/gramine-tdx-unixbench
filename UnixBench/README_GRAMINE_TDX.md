@@ -14,7 +14,7 @@ $ ./run_unixbench_with_gramine.sh
 ```
 $ python3 gather_results.py ./results
 ```
-5. Pretty-print the results (requires python's `prettytable`):
+5. Pretty-print the results (requires python's `prettytable` -- you can get it via `pip install prettytable` or `sudo apt install python3-prettytable`):
 ```
 $ python3 prettyprint_results.py
 ```
