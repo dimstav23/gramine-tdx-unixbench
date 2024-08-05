@@ -15,6 +15,7 @@ RENAME_BENCHMARKS = {
     "pipe": "Pipe Throughput",
     "spawn": "Process Creation",
     "execl": "Execl Throughput",
+    "execl": "Execl Throughput (10 seconds)",
     "fstime-w": "File Write 1024 bufsize 2000 maxblocks",
     "fstime-r": "File Read 1024 bufsize 2000 maxblocks",
     "fstime": "File Copy 1024 bufsize 2000 maxblocks",
@@ -93,14 +94,14 @@ def pretty_print_table(results):
     print("Absolute Numbers:")
     print(table)
 
-def pretty_print_percentage_table(results):
+def pretty_print_ratio_table(results):
     # Get the list of benchmarks and variants
     benchmarks = sorted(results.keys())
     variants = VARIANT_ORDER
 
-    # Create the table for percentage differences
+    # Create the table for performance ratios
     table = PrettyTable()
-    table.field_names = ["Benchmark"] + variants[1:]  # Skip 'native' for percentage diff table
+    table.field_names = ["Benchmark"] + variants[1:]  # Skip 'native' for ratio table
 
     for benchmark in benchmarks:
         if 'native' in results[benchmark]:
@@ -112,11 +113,11 @@ def pretty_print_percentage_table(results):
                 if score == '-':
                     row.append('-')
                 else:
-                    percentage_diff = ((score - native_score) / native_score) * 100
-                    row.append(f'{percentage_diff:.3f}%')
+                    ratio = score / native_score
+                    row.append(f'{ratio:.5f}x')
             table.add_row(row)
 
-    print("Percentage Differences (relative to native):")
+    print("Performance Ratios (relative to native):")
     print(table)
 
 if __name__ == "__main__":
@@ -127,4 +128,4 @@ if __name__ == "__main__":
     directory = sys.argv[1]
     results = collect_averages(directory)
     pretty_print_table(results)
-    pretty_print_percentage_table(results)
+    pretty_print_ratio_table(results)
